@@ -96,6 +96,7 @@ helper turn_off => sub {
         my $device = $2;
         $self->app->log->info("Got Device [$device]");
         $self->turn( $device, 'off' );
+        $self->status;
     }
     else {
         $self->reply("Device Missing , use 'off device' or 'off all'");
@@ -107,8 +108,10 @@ helper discover => sub {
     my $self         = shift;
     my $wemoDiscover = WebService::Belkin::WeMo::Discover->new();
     my $wemo;
-    eval { $wemo = $wemoDiscover->load($belkindb); };
-    $self->app->log->error("Failed to discover WEMO Devices $@");
+    eval { 
+        $wemo = $wemoDiscover->load($belkindb); 
+    };
+    $self->app->log->error("Failed to discover WEMO Devices $@") if ($@);
     return $wemo;
 };
 
@@ -151,7 +154,7 @@ helper turn => sub {
                 $self->app->log->error("Error al invocar WEMO [$@]");
             }
             else {
-                $self->app->log->info("Turning $action for wemo $_");
+                $self->app->log->info("Turning $action for wemo $target");
                 if ( $action eq "off" ) {
                     $wemo->off();
                 }
