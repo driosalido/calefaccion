@@ -1,0 +1,68 @@
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          wemo-server
+# Required-Start:    $local_fs $remote_fs
+# Required-Stop:     $local_fs $remote_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Wemo Server Daemon
+# Description:       Daemon for controlling WEMO devices
+### END INIT INFO
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/opt/calefaccion/sbin/wemo-server.pl
+NAME=wemo-server.pl
+DESC="WEMO Daemon"
+PIDFILE=/run/wemo-server.pid
+
+# user which will run this daemon
+USER=root
+
+
+# Gracefully exit if the package has been removed.
+test -x $DAEMON || exit 0
+
+# Include user parameters if available
+if [ -f /etc/default/$NAME ] ; then
+	. /etc/default/$NAME
+fi
+
+. /lib/lsb/init-functions
+
+case "$1" in
+
+  status)
+	status_of_proc -p $PIDFILE $DAEMON $NAME
+
+  ;;
+  start)
+	log_daemon_msg "Starting $DESC" "$NAME"
+    hypnotoad $DAEMON
+    log_end_msg $?
+	;;
+  stop)
+    log_daemon_msg "Stopping $DESC" $NAME
+    PID=`cat $PIDFILE`
+    kill -s TERM $PID
+    log_end_msg $?
+	;;
+  restart|force-reload)
+    PID=`cat $PIDFILE`
+    kill -s TERM $PID
+    sleep 1
+    hypnotoad $DAEMON
+	;;
+  reload)
+  	log_daemon_msg "Reloading $DESC" $NAME
+    PID=`cat $PIDFILE`
+    kill -s USR2 $PID
+	log_end_msg $?
+  ;;
+  *)
+	N=/etc/init.d/$NAME
+	echo "Usage: $N {start|stop|status|restart|force-reload|reload}" >&2
+	exit 1
+	;;
+esac
+
+exit 0
