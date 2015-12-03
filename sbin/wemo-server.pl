@@ -3,10 +3,11 @@
 use WebService::Belkin::WeMo::Discover;
 use WebService::Belkin::WeMo::Device;
 use Mojolicious::Lite;
-use Mojo::JSON;
+use JSON;
 use Data::Dumper;
 
 my $belkindb = "/etc/belkin.db";
+my $tempsfile = "/run/temps.json";
 
 my @CMDS   = qw(test status commands on off);
 my %ROUTES = (
@@ -59,7 +60,12 @@ helper status => sub {
             $devices .= $wemo->getFriendlyName();
             $devices .= "[" . $wemo->getBinaryState() . "],";
         }
-        chop $devices;
+	my $temps = $self->get_temps;
+	foreach my $temp (keys %{$temps->{'temp-in'}}){
+		$devices .= $temp;
+		$devices .= "[" . $temps->{'temp-in'}{$temp} . "],";	
+	}
+	chop $devices;
         $self->reply($devices);
     }
     else {
@@ -182,6 +188,21 @@ helper change_status => sub {
     my $self   = shift;
     my $device = shift;
     my $status = shift;
+};
+
+helper get_temps => sub {
+    my $self = shift;
+    my $json = JSON->new;
+    my $json_text = do {
+        open(my $json_fh, "<" , $tempsfile)
+            or do { 
+                $self->app->log->error("Error reading temps file [$!]");
+            } ;
+        local $/;
+        <$json_fh>
+    };
+    my $data = $json->decode($json_text);
+    return $data;
 };
 
 ###CONFIGS
