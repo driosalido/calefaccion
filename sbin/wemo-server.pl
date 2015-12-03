@@ -8,8 +8,6 @@ use Data::Dumper;
 use Encode;
 use strict;
 
-# Helpful if you run behind nginx
-
 helper reply => sub {
     my $self    = shift;
     my $message = shift;
